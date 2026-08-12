@@ -1,671 +1,845 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUPER帽子のおじさんブラザーズ</title>
-    <style>
-        /* 画面全体のスタイルをリセットし、縦方向の中央揃えにする */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #2c3e50;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: white;
-            font-family: sans-serif;
-            overflow: hidden;
-        }
-        
-        /* ゲーム画面（キャンバス）のスタイル */
-        canvas {
-            background-color: #87CEEB; /* 空の水色 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* 影をつけて立体感を出す */
-            border: 4px solid #fff;
-            border-radius: 8px;
-            max-width: 100%;
-            height: auto;
-        }
-        
-        /* ゲームタイトルのスタイル */
-        #title-container {
-            margin-bottom: 10px;
-            text-align: center;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>COLOR CHAIN</title>
+  <style>
+    /* 全体スタイルの設定 */
+    :root {
+      --bg-color: #1a1e29;
+      --card-bg: #252b3b;
+      --text-color: #ffffff;
+      --accent-color: #ff4757;
+      --panel-bg: #151922;
+    }
 
-        #title-container h2 {
-            margin: 0 0 5px 0;
-            font-size: 22px;
-            color: #f1c40f;
-            text-shadow: 2px 2px #c0392b;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-        /* 操作説明用のUIテキスト（画面の下側に配置） */
-        #ui {
-            margin-top: 15px;
-            text-align: center;
-            width: 100%;
-            font-size: 14px;
-            color: #bdc3c7;
-            background-color: rgba(0, 0, 0, 0.3);
-            padding: 8px 0;
-            border-radius: 4px;
-        }
-    </style>
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      text-align: center;
+      letter-spacing: 2px;
+      color: #4ed1a0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* チュートリアルガイド表示エリア */
+    .guide-banner {
+      background: linear-gradient(135deg, #1e90ff, #70a1ff);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(30, 144, 255, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .guide-banner.cleared {
+      background: linear-gradient(135deg, #2ed573, #26af5f);
+      box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
+    }
+
+    .main-layout {
+      display: flex;
+      gap: 15px;
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      max-width: 100%;
+    }
+
+    .game-board-container {
+      position: relative;
+    }
+
+    canvas#gameCanvas {
+      background-color: var(--panel-bg);
+      border: 3px solid #3b445c;
+      border-radius: 8px;
+      display: block;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 130px;
+    }
+
+    .panel-box {
+      background: var(--panel-bg);
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #3b445c;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .panel-title {
+      font-size: 0.7rem;
+      color: #8e9aaf;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+
+    .panel-value {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #ffda6a;
+    }
+
+    .high-score-val {
+      color: #ff7675;
+    }
+
+    canvas#nextCanvas {
+      background-color: var(--panel-bg);
+      border-radius: 6px;
+      display: block;
+      margin: 2px auto 0;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #2ed573, #26af5f);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 5px rgba(46, 213, 115, 0.3);
+    }
+
+    /* モバイル・タッチ操作用コントローラー */
+    .touch-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .touch-btn {
+      background: var(--card-bg);
+      border: 1px solid #3b445c;
+      color: #fff;
+      padding: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .touch-btn:active {
+      background: #3b445c;
+    }
+
+    .instructions {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: #8e9aaf;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* レスポンシブ調整 */
+    @media (max-width: 480px) {
+      .main-layout {
+        padding: 10px;
+        gap: 10px;
+      }
+      .sidebar {
+        width: 100px;
+      }
+      .panel-value {
+        font-size: 0.95rem;
+      }
+      .guide-banner {
+        font-size: 0.75rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
-    <div id="title-container">
-        <h2>SUPER帽子のおじさんブラザーズ</h2>
+  <h1>COLOR CHAIN</h1>
+
+  <!-- ガイド・チュートリアルバナー -->
+  <div class="guide-banner" id="guideBanner">
+    💡 【ミッション】同じ色を4つ繋げて、目標 3連鎖 を目指そう！
+  </div>
+
+  <div class="main-layout">
+    <div class="game-board-container">
+      <canvas id="gameCanvas" width="240" height="480"></canvas>
     </div>
 
-    <!-- ゲームを描画するためのキャンバス -->
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div class="sidebar">
+      <div>
+        <div class="panel-box">
+          <div class="panel-title">NEXT</div>
+          <canvas id="nextCanvas" width="70" height="70"></canvas>
+        </div>
 
-    <div id="ui">
-        移動：左右矢印キー（← →） | ジャンプ：上矢印キー（↑）またはスペースキー | 土管の上で下キー：ワープ
+        <div class="panel-box">
+          <div class="panel-title">HIGH SCORE</div>
+          <div class="panel-value high-score-val" id="highScore">0</div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-title">SCORE</div>
+          <div class="panel-value" id="score">0</div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-title">CHAIN</div>
+          <div class="panel-value" id="chain">0</div>
+        </div>
+      </div>
+
+      <div>
+        <button class="btn" id="startBtn">START</button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+  <div class="touch-controls">
+    <div class="touch-btn" id="btnLeft">←</div>
+    <div class="touch-btn" id="btnRotate">回転</div>
+    <div class="touch-btn" id="btnRight">→</div>
+    <div class="touch-btn" style="grid-column: span 3;" id="btnDown">↓（高速落下）</div>
+  </div>
 
-        const keys = {
-            left: false,
-            right: false,
-            up: false,
-            down: false
-        };
+  <div class="instructions">
+    [PC操作] ← / → : 移動 | ↓ : 下降 | Space / Z : 回転
+  </div>
 
-        let score = 0;
-        let coins = 0;
+  <script>
+    // --- 1. ゲームの基本定数定義 ---
+    const COLS = 6;              // 横のマス数
+    const ROWS = 12;             // 縦の表示マス数
+    const BLOCK_SIZE = 40;       // 1マスのサイズ(px)
 
-        // プレイヤーの設定（遠くからでもブロックにしっかり乗れる超強化ジャンプ力）
-        const player = {
-            x: 50,
-            y: 50,
-            w: 30,
-            h: 36,
-            vx: 0,
-            vy: 0,
-            speed: 4.5,
-            jumpPower: -13.5, // さらに高く遠くまで跳べるジャンプ力
-            gravity: 0.5,     // 重力を少し軽くして滞空時間を延長
-            isGrounded: false,
-            isBig: false,
-            lives: 3,             // 3回までダメージに耐えられる
-            invincibleTimer: 0,
-            facing: 'right'
-        };
+    // ぷよの色定義（1:赤, 2:青, 3:緑, 4:黄, 5:紫）
+    const COLORS = [
+      null,
+      '#ff4757', // 1: 赤
+      '#1e90ff', // 2: 青
+      '#2ed573', // 3: 緑
+      '#ffa502', // 4: 黄
+      '#9b59b6'  // 5: 紫
+    ];
 
-        // ステージのブロックデータ（地面、足場、壁、3Dびっくりブロックなど）
-        const blocks = [
-            { x: 0, y: 350, w: 900, h: 50, type: 'ground', color: '#8B4513' }, // スタートの床
-            { x: 1000, y: 350, w: 1000, h: 50, type: 'ground', color: '#8B4513' }, // 穴の先の床
-            { x: 400, y: 240, w: 40, h: 40, type: 'question', hit: false }, // 3D風びっくりブロック1
-            { x: 480, y: 240, w: 40, h: 40, type: 'block3d' },  // 3D風茶色ブロック1
-            { x: 520, y: 240, w: 40, h: 40, type: 'question', hit: false }, // 3D風びっくりブロック2
-            { x: 650, y: 160, w: 40, h: 40, type: 'block3d' },  // 3D風茶色ブロック2
-            { x: 690, y: 160, w: 40, h: 40, type: 'question', hit: false }, // 3D風びっくりブロック3
-            // 緑色のワープ土管（上に乗って下キーを押すとワープ！）
-            { x: 800, y: 290, w: 50, h: 60, type: 'pipe', color: '#2ecc71', targetWorld: 2 },
-            { x: 1300, y: 220, w: 40, h: 40, type: 'block3d' }, // 浮き島ブロック
-            { x: 1340, y: 220, w: 40, h: 40, type: 'question', hit: false },
-            { x: 1800, y: 300, w: 50, h: 50, type: 'goal', color: '#f1c40f' }     // ゴール（金色）
-        ];
+    // キャンバス・DOM要素の取得
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nextCtx = nextCanvas.getContext('2d');
 
-        // 別ワールド（ワープ先）のブロックデータ
-        const world2Blocks = [
-            { x: 0, y: 350, w: 1200, h: 50, type: 'ground', color: '#8e44ad' }, // 紫色の地下ワールド床
-            { x: 300, y: 220, w: 60, h: 40, type: 'block3d' },
-            { x: 360, y: 220, w: 60, h: 40, type: 'question', hit: false },
-            { x: 700, y: 250, w: 50, h: 100, type: 'block3d' },
-            // 地下ワールドから戻る土管
-            { x: 900, y: 290, w: 50, h: 60, type: 'pipe', color: '#2ecc71', targetWorld: 1 },
-            { x: 1100, y: 300, w: 50, h: 50, type: 'goal', color: '#f1c40f' }     // 地下ワールドのゴール
-        ];
+    const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('highScore');
+    const chainEl = document.getElementById('chain');
+    const startBtn = document.getElementById('startBtn');
+    const guideBanner = document.getElementById('guideBanner');
 
-        let currentWorld = 1;
-        let items = [];
+    // 初期状態の盤面を定義する関数
+    function createGrid() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    }
 
-        // フィールドをうろつく敵（栗ボー風）の配列
-        const enemies = [
-            { x: 600, y: 320, w: 30, h: 30, vx: -1.5, alive: true, patrolMin: 450, patrolMax: 700 },
-            { x: 1200, y: 320, w: 30, h: 30, vx: -2, alive: true, patrolMin: 1050, patrolMax: 1400 },
-            { x: 1500, y: 320, w: 30, h: 30, vx: -1.5, alive: true, patrolMin: 1400, patrolMax: 1700 }
-        ];
+    // ゲーム状態変数
+    let grid = createGrid();   // 12行x6列の盤面データ
+    let currentPuyo = null;    // 操作中のぷよペア
+    let nextPuyoPair = null;   // 次のぷよペア
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('puyo_high_score')) || 0; // localStorageから保存スコアを取得
+    let chainCount = 0;
+    let maxChainAchieved = 0;  // 達成した最大連鎖数
+    let isTutorialCleared = false; // 3連鎖クリアフラグ
+    let gameOver = false;
+    let isProcessing = false;  // 連鎖処理中フラグ（入力不可制御）
+    let dropCounter = 0;
+    let dropInterval = 800;    // 自然落下間隔 (ms)
+    let lastTime = 0;
+    let animationFrameId = null;
 
-        const world2Enemies = [
-            { x: 450, y: 320, w: 30, h: 30, vx: -2, alive: true, patrolMin: 300, patrolMax: 650 }
-        ];
+    // ポップアップ表示用の連鎖エフェクト配列
+    let chainPopups = [];
 
-        let cameraX = 0;
-        let gameState = 'playing';
+    // 初期ハイスコア表示
+    highScoreEl.textContent = highScore;
 
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'ArrowLeft') {
-                keys.left = true;
-                player.facing = 'left';
+    // WEB Audio APIによる簡易効果音再生
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, duration = 0.1, type = 'sine') {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // スコア加算とハイスコア更新判定
+    function addScore(amount) {
+      score += amount;
+      scoreEl.textContent = score;
+
+      // 現在スコアがハイスコアを超えたらリアルタイム更新 & 保存
+      if (score > highScore) {
+        highScore = score;
+        highScoreEl.textContent = highScore;
+        localStorage.setItem('puyo_high_score', highScore);
+      }
+    }
+
+    // ガイド（バナー）の表示を更新する関数
+    function updateGuideBanner(currentChain) {
+      if (isTutorialCleared) return;
+
+      if (currentChain >= 3) {
+        isTutorialCleared = true;
+        guideBanner.className = 'guide-banner cleared';
+        guideBanner.innerHTML = '🎉 【チュートリアル達成！】3連鎖クリア！自由にお楽しみください！';
+        playSound(600, 0.3, 'triangle');
+      } else {
+        const remaining = 3 - maxChainAchieved;
+        guideBanner.className = 'guide-banner';
+        if (maxChainAchieved === 0) {
+          guideBanner.innerHTML = '💡 【ミッション】同じ色を4つ繋げて消そう！目標: 3連鎖！';
+        } else {
+          guideBanner.innerHTML = `🔥 最高 ${maxChainAchieved} 連鎖達成中！あと ${remaining} 連鎖で目標達成！`;
+        }
+      }
+    }
+
+    // 新しいぷよペアをランダム生成
+    function generatePuyoPair() {
+      const c1 = Math.floor(Math.random() * 4) + 1; // 1〜4色で生成
+      const c2 = Math.floor(Math.random() * 4) + 1;
+      return { c1, c2 };
+    }
+
+    // ぷよの生成と出現処理
+    function spawnPuyo() {
+      if (!nextPuyoPair) {
+        nextPuyoPair = generatePuyoPair();
+      }
+
+      const pair = nextPuyoPair;
+      nextPuyoPair = generatePuyoPair();
+      drawNextPuyo();
+
+      currentPuyo = {
+        x: 2,          // 出現列（中央付近）
+        y: 0,          // 出現行（最上部）
+        c1: pair.c1,   // 軸ぷよ（メイン）
+        c2: pair.c2,   // 子ぷよ（回転移動する側）
+        rotation: 0    // 0: 上, 1: 右, 2: 下, 3: 左
+      };
+
+      // 出現位置が埋まっている場合はゲームオーバー
+      if (grid[0][2] !== 0) {
+        gameOver = true;
+        playSound(150, 0.5, 'sawtooth');
+      }
+    }
+
+    // 子ぷよの相対座標を取得
+    function getChildOffset(rotation) {
+      switch (rotation % 4) {
+        case 0: return { x: 0, y: -1 }; // 上
+        case 1: return { x: 1, y: 0 };  // 右
+        case 2: return { x: 0, y: 1 };  // 下
+        case 3: return { x: -1, y: 0 }; // 左
+      }
+    }
+
+    // --- 3. 衝突・移動判定 ---
+    function isValidMove(puyo, offsetX = 0, offsetY = 0, rotation = puyo.rotation) {
+      const nx1 = puyo.x + offsetX;
+      const ny1 = puyo.y + offsetY;
+
+      const offset = getChildOffset(rotation);
+      const nx2 = nx1 + offset.x;
+      const ny2 = ny1 + offset.y;
+
+      const isOutsideOrBlocked = (x, y) => {
+        if (x < 0 || x >= COLS || y >= ROWS) return true;
+        if (y >= 0 && grid[y] && grid[y][x] !== 0) return true;
+        return false;
+      };
+
+      return !isOutsideOrBlocked(nx1, ny1) && !isOutsideOrBlocked(nx2, ny2);
+    }
+
+    // 移動コマンド処理
+    function moveLeft() {
+      if (isProcessing || gameOver || !currentPuyo) return;
+      if (isValidMove(currentPuyo, -1, 0)) {
+        currentPuyo.x--;
+        playSound(300, 0.05);
+      }
+    }
+
+    function moveRight() {
+      if (isProcessing || gameOver || !currentPuyo) return;
+      if (isValidMove(currentPuyo, 1, 0)) {
+        currentPuyo.x++;
+        playSound(300, 0.05);
+      }
+    }
+
+    function moveDown() {
+      if (isProcessing || gameOver || !currentPuyo) return;
+      if (isValidMove(currentPuyo, 0, 1)) {
+        currentPuyo.y++;
+        addScore(1); // 手動落下ボーナス
+      } else {
+        lockPuyo();
+      }
+    }
+
+    function rotatePuyo() {
+      if (isProcessing || gameOver || !currentPuyo) return;
+      const nextRot = (currentPuyo.rotation + 1) % 4;
+      
+      // 通常回転の試行
+      if (isValidMove(currentPuyo, 0, 0, nextRot)) {
+        currentPuyo.rotation = nextRot;
+        playSound(400, 0.05);
+      } else if (isValidMove(currentPuyo, -1, 0, nextRot)) { // 壁蹴り（左）
+        currentPuyo.x--;
+        currentPuyo.rotation = nextRot;
+        playSound(400, 0.05);
+      } else if (isValidMove(currentPuyo, 1, 0, nextRot)) {  // 壁蹴り（右）
+        currentPuyo.x++;
+        currentPuyo.rotation = nextRot;
+        playSound(400, 0.05);
+      }
+    }
+
+    // --- 4. ぷよ固定と落下・連鎖の処理 ---
+    async function lockPuyo() {
+      isProcessing = true;
+      const offset = getChildOffset(currentPuyo.rotation);
+
+      if (currentPuyo.y >= 0) grid[currentPuyo.y][currentPuyo.x] = currentPuyo.c1;
+      const cy = currentPuyo.y + offset.y;
+      const cx = currentPuyo.x + offset.x;
+      if (cy >= 0) grid[cy][cx] = currentPuyo.c2;
+
+      currentPuyo = null;
+      playSound(200, 0.08);
+
+      // 連鎖の繰り返し処理を実行
+      await processChains();
+
+      if (!gameOver) {
+        spawnPuyo();
+      }
+      isProcessing = false;
+    }
+
+    // 重力適用（浮いているぷよを一番下まで落とす）
+    function applyGravity() {
+      let moved = false;
+      for (let x = 0; x < COLS; x++) {
+        for (let y = ROWS - 2; y >= 0; y--) {
+          if (grid[y][x] !== 0 && grid[y + 1][x] === 0) {
+            let targetY = y;
+            while (targetY + 1 < ROWS && grid[targetY + 1][x] === 0) {
+              grid[targetY + 1][x] = grid[targetY][x];
+              grid[targetY][x] = 0;
+              targetY++;
+              moved = true;
             }
-            if (e.code === 'ArrowRight') {
-                keys.right = true;
-                player.facing = 'right';
-            }
-            if (e.code === 'ArrowDown') {
-                keys.down = true;
-                tryWarp();
-            }
-            if (e.code === 'ArrowUp' || e.code === 'Space') {
-                keys.up = true;
-                if ((gameState === 'gameover' || gameState === 'clear') && e.code === 'Space') {
-                    restartGame();
-                    return;
+          }
+        }
+      }
+      return moved;
+    }
+
+    // 4つ以上繋がっているぷよ群を探索（幅優先探索 BFS）
+    function findConnectedMatches() {
+      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+      let matches = [];
+
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const color = grid[y][x];
+          if (color === 0 || visited[y][x]) continue;
+
+          const group = [];
+          const queue = [{ x, y }];
+          visited[y][x] = true;
+
+          while (queue.length > 0) {
+            const curr = queue.shift();
+            group.push(curr);
+
+            const neighbors = [
+              { x: curr.x + 1, y: curr.y },
+              { x: curr.x - 1, y: curr.y },
+              { x: curr.x, y: curr.y + 1 },
+              { x: curr.x, y: curr.y - 1 }
+            ];
+
+            neighbors.forEach(n => {
+              if (n.x >= 0 && n.x < COLS && n.y >= 0 && n.y < ROWS) {
+                if (!visited[n.y][n.x] && grid[n.y][n.x] === color) {
+                  visited[n.y][n.x] = true;
+                  queue.push(n);
                 }
-                if (gameState === 'playing' && player.isGrounded) {
-                    player.vy = player.jumpPower;
-                    player.isGrounded = false;
-                }
-            }
-        });
+              }
+            });
+          }
 
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'ArrowLeft') keys.left = false;
-            if (e.code === 'ArrowRight') keys.right = false;
-            if (e.code === 'ArrowDown') keys.down = false;
-            if (e.code === 'ArrowUp' || e.code === 'Space') keys.up = false;
-        });
+          // 同色が4個以上接続されていれば消去対象へ
+          if (group.length >= 4) {
+            matches = matches.concat(group);
+          }
+        }
+      }
+      return matches;
+    }
 
-        // 土管ワープ機能
-        function tryWarp() {
-            if (gameState !== 'playing') return;
-            const currentBlocks = currentWorld === 1 ? blocks : world2Blocks;
-            for (let block of currentBlocks) {
-                if (block.type === 'pipe' && checkCollision(player, block)) {
-                    if (player.y + player.h === block.y) {
-                        currentWorld = block.targetWorld;
-                        player.x = 100;
-                        player.y = 50;
-                        player.vy = 0;
-                        cameraX = 0;
-                        break;
-                    }
-                }
-            }
+    // 連鎖テキストポップアップを追加する関数
+    function showChainPopup(count, matches) {
+      // 消去されるぷよの中心座標を計算
+      let sumX = 0;
+      let sumY = 0;
+      matches.forEach(m => {
+        sumX += m.x;
+        sumY += m.y;
+      });
+      const avgX = (sumX / matches.length) * BLOCK_SIZE + BLOCK_SIZE / 2;
+      const avgY = (sumY / matches.length) * BLOCK_SIZE + BLOCK_SIZE / 2;
+
+      // 画面内に収まるように位置を調整
+      const px = Math.min(Math.max(avgX, 60), canvas.width - 60);
+      const py = Math.min(Math.max(avgY, 40), canvas.height - 40);
+
+      chainPopups.push({
+        text: `${count} CHAIN!`,
+        x: px,
+        y: py,
+        life: 1.0,  // 表示タイマー（1.0から0へ減少）
+        count: count
+      });
+    }
+
+    // 連鎖処理ループ
+    async function processChains() {
+      chainCount = 0;
+      let hasChains = true;
+
+      while (hasChains) {
+        // 重力適用
+        let moved = applyGravity();
+        if (moved) {
+          draw();
+          await new Promise(r => setTimeout(r, 150));
         }
 
-        function checkCollision(rect1, rect2) {
-            return rect1.x < rect2.x + rect2.w &&
-                   rect1.x + rect1.w > rect2.x &&
-                   rect1.y < rect2.y + rect2.h &&
-                   rect1.y + rect1.h > rect2.y;
+        // 判定
+        const matches = findConnectedMatches();
+
+        if (matches.length > 0) {
+          chainCount++;
+          chainEl.textContent = chainCount;
+
+          // 最大達成連鎖数の更新とガイドバナーの更新
+          if (chainCount > maxChainAchieved) {
+            maxChainAchieved = chainCount;
+            updateGuideBanner(chainCount);
+          }
+
+          // 連鎖数字の画面上表示を追加
+          showChainPopup(chainCount, matches);
+
+          // 効果音（連鎖数に応じて高音化）
+          playSound(400 + chainCount * 150, 0.2, 'triangle');
+
+          // スコア計算 (消えた数 × 10 × 連鎖倍率)
+          const baseScore = matches.length * 10;
+          const chainBonus = Math.pow(2, chainCount);
+          addScore(baseScore * chainBonus);
+
+          // 消去
+          matches.forEach(({ x, y }) => {
+            grid[y][x] = 0;
+          });
+
+          draw();
+          await new Promise(r => setTimeout(r, 350));
+        } else {
+          hasChains = false;
         }
+      }
+    }
 
-        function update() {
-            if (gameState !== 'playing') return;
+    // --- 5. 描画処理 ---
+    function drawPuyoBlock(ctx, x, y, colorCode, size = BLOCK_SIZE) {
+      if (!colorCode || y < 0) return;
 
-            const currentBlocks = currentWorld === 1 ? blocks : world2Blocks;
-            const currentEnemies = currentWorld === 1 ? enemies : world2Enemies;
+      const px = x * size + size / 2;
+      const py = y * size + size / 2;
+      const radius = size / 2 - 2;
 
-            if (player.invincibleTimer > 0) {
-                player.invincibleTimer--;
-            }
+      // 本体描画
+      ctx.beginPath();
+      ctx.arc(px, py, radius, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS[colorCode];
+      ctx.fill();
+      ctx.closePath();
 
-            player.vy += player.gravity;
-            player.y += player.vy;
-            player.isGrounded = false;
+      // 光沢（ツヤ）の描画（立体感）
+      ctx.beginPath();
+      ctx.arc(px - radius * 0.3, py - radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fill();
+      ctx.closePath();
+    }
 
-            // ブロックとの縦方向の判定
-            for (let block of currentBlocks) {
-                if (checkCollision(player, block)) {
-                    if (block.type === 'goal') {
-                        gameState = 'clear';
-                        return;
-                    }
+    // 連鎖ポップアップテキストの描画
+    function drawChainPopups() {
+      for (let i = chainPopups.length - 1; i >= 0; i--) {
+        const popup = chainPopups[i];
+        
+        ctx.save();
+        ctx.globalAlpha = popup.life; // 徐々に透明にする
+        
+        // 連鎖数に応じて文字を大きく＆派手に演出
+        const fontSize = Math.min(22 + popup.count * 4, 38);
+        ctx.font = `italic bold ${fontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-                    if (player.vy > 0) {
-                        player.y = block.y - player.h;
-                        player.vy = 0;
-                        player.isGrounded = true;
-                    } else if (player.vy < 0) {
-                        player.y = block.y + block.h;
-                        player.vy = 0;
+        // 文字の影・フチの描画
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 6;
+        ctx.strokeText(popup.text, popup.x, popup.y);
 
-                        // びっくりブロックを叩いたとき（コインや五平餅などが出現）
-                        if (block.type === 'question' && !block.hit) {
-                            block.hit = true;
-                            const types = ['coin', 'kurikinton', 'gopheimochi', 'hobazushi'];
-                            const chosenType = types[Math.floor(Math.random() * types.length)];
-                            
-                            items.push({
-                                x: block.x + 4,
-                                y: block.y - 32,
-                                w: 32,
-                                h: 32,
-                                vx: chosenType === 'coin' ? 0 : 1,
-                                vy: -4,
-                                type: chosenType
-                            });
-                        }
-                    }
-                }
-            }
+        // 文字本体（金色や派手なグラデーション風）
+        ctx.fillStyle = popup.count >= 4 ? '#fffa65' : '#ffffff';
+        ctx.fillText(popup.text, popup.x, popup.y);
 
-            // 横方向の移動
-            if (keys.left) {
-                player.vx = -player.speed;
-            } else if (keys.right) {
-                player.vx = player.speed;
-            } else {
-                player.vx = 0;
-            }
+        ctx.restore();
 
-            player.x += player.vx;
+        // 浮き上がり＆フェードアウトアニメーション
+        popup.y -= 0.8;
+        popup.life -= 0.025;
 
-            for (let block of currentBlocks) {
-                if (checkCollision(player, block) && block.type !== 'goal' && block.type !== 'pipe') {
-                    if (player.vx > 0) {
-                        player.x = block.x - player.w;
-                    } else if (player.vx < 0) {
-                        player.x = block.x + block.w;
-                    }
-                }
-            }
-
-            // アイテムの更新と取得判定
-            for (let i = items.length - 1; i >= 0; i--) {
-                let item = items[i];
-                if (item.type !== 'coin') {
-                    item.vy += player.gravity;
-                    item.y += item.vy;
-
-                    for (let block of currentBlocks) {
-                        if (block.type !== 'goal' && block.type !== 'pipe' && checkCollision(item, block)) {
-                            if (item.vy > 0) {
-                                item.y = block.y - item.h;
-                                item.vy = 0;
-                            }
-                        }
-                    }
-                    item.x += item.vx;
-                }
-
-                if (checkCollision(player, item)) {
-                    if (item.type === 'coin') {
-                        coins++;
-                        score += 100;
-                    } else {
-                        // パワーアップ
-                        if (!player.isBig) {
-                            player.isBig = true;
-                            player.y -= 16;
-                            player.h = 52;
-                        }
-                        score += 1000;
-                    }
-                    items.splice(i, 1);
-                }
-            }
-
-            // 敵の移動と衝突判定
-            for (let enemy of currentEnemies) {
-                if (!enemy.alive) continue;
-
-                enemy.x += enemy.vx;
-                if (enemy.x < enemy.patrolMin || enemy.x > enemy.patrolMax) {
-                    enemy.vx *= -1;
-                }
-
-                if (checkCollision(player, enemy)) {
-                    // 上から踏んだ場合
-                    if (player.vy > 0 && player.y + player.h - player.vy <= enemy.y + 10) {
-                        enemy.alive = false;
-                        player.vy = -8;
-                        score += 200;
-                    } else {
-                        // 横からぶつかった場合（ダメージ処理・複数回耐えられる）
-                        if (player.invincibleTimer === 0) {
-                            player.lives--;
-                            player.invincibleTimer = 90; // 約1.5秒の無敵時間
-                            
-                            if (player.lives <= 0) {
-                                gameState = 'gameover';
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (player.y > canvas.height) {
-                gameState = 'gameover';
-            }
-
-            const targetCameraX = player.x - canvas.width / 2;
-            if (targetCameraX > 0) {
-                cameraX = targetCameraX;
-            } else {
-                cameraX = 0;
-            }
+        // 寿命が尽きたら削除
+        if (popup.life <= 0) {
+          chainPopups.splice(i, 1);
         }
+      }
+    }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // チュートリアル用のガイドオーバーレイ描画
+    function drawTutorialOverlay() {
+      if (isTutorialCleared || gameOver) return;
 
-            const currentBlocks = currentWorld === 1 ? blocks : world2Blocks;
-            const currentEnemies = currentWorld === 1 ? enemies : world2Enemies;
+      // プレイ開始初期でまだ何も連鎖していない時、簡単なヒントを下部に薄く表示
+      if (maxChainAchieved === 0 && !isProcessing) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ぷよを重ねて段差を作ると', canvas.width / 2, canvas.height - 30);
+        ctx.fillText('連鎖が起きやすくなるよ！', canvas.width / 2, canvas.height - 12);
+        ctx.restore();
+      }
+    }
 
-            // 背景描画（山や雲）
-            if (currentWorld === 1) {
-                ctx.fillStyle = '#78b5e9';
-                ctx.beginPath();
-                let mountainOffset = -(cameraX * 0.3) % 400;
-                for (let i = -1; i < 6; i++) {
-                    let mx = i * 400 + mountainOffset;
-                    ctx.moveTo(mx, 350);
-                    ctx.lineTo(mx + 200, 150);
-                    ctx.lineTo(mx + 400, 350);
-                }
-                ctx.fill();
+    function draw() {
+      // 盤面クリア
+      ctx.fillStyle = '#151922';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                ctx.fillStyle = '#5ca4d8';
-                ctx.beginPath();
-                let mountainOffset2 = -(cameraX * 0.5) % 300;
-                for (let i = -1; i < 8; i++) {
-                    let mx = i * 300 + mountainOffset2;
-                    ctx.moveTo(mx, 350);
-                    ctx.lineTo(mx + 150, 200);
-                    ctx.lineTo(mx + 300, 350);
-                }
-                ctx.fill();
-
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                const cloudOffset = -(cameraX * 0.2);
-                drawCloud(150 + (cloudOffset % 900), 70, 60);
-                drawCloud(500 + (cloudOffset % 900), 50, 40);
-                drawCloud(850 + (cloudOffset % 900), 90, 70);
-            } else {
-                ctx.fillStyle = '#2c163a';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#4a235a';
-                ctx.font = 'bold 20px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('〜 地下ボーナスステージ 〜', canvas.width / 2, 50);
-            }
-
-            ctx.save();
-            ctx.translate(-cameraX, 0);
-
-            // ブロック描画
-            for (let block of currentBlocks) {
-                if (block.type === 'ground') {
-                    ctx.fillStyle = currentWorld === 1 ? '#8B5A2B' : '#512e5f';
-                    ctx.fillRect(block.x, block.y, block.w, block.h);
-
-                    if (currentWorld === 1) {
-                        ctx.fillStyle = '#654321';
-                        for (let i = block.x + 10; i < block.x + block.w; i += 30) {
-                            ctx.fillRect(i, block.y + 10, 8, 8);
-                        }
-                        ctx.fillStyle = '#2ecc71';
-                        ctx.fillRect(block.x, block.y, block.w, 8);
-                    }
-                } 
-                // 3D風茶色ブロック（立体的な枠線とグラデーション）
-                else if (block.type === 'block3d') {
-                    ctx.fillStyle = '#d2691e';
-                    ctx.fillRect(block.x, block.y, block.w, block.h);
-                    
-                    ctx.fillStyle = '#f4a460';
-                    ctx.fillRect(block.x, block.y, block.w, 4);
-                    ctx.fillRect(block.x, block.y, 4, block.h);
-
-                    ctx.fillStyle = '#8b4513';
-                    ctx.fillRect(block.x, block.y + block.h - 4, block.w, 4);
-                    ctx.fillRect(block.x + block.w - 4, block.y, 4, block.h);
-
-                    ctx.strokeStyle = '#a0522d';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(block.x + 4, block.y + 4, block.w - 8, block.h - 8);
-                } 
-                // 3D風びっくりブロック（ハテナブロック）
-                else if (block.type === 'question') {
-                    ctx.fillStyle = block.hit ? '#95a5a6' : '#f1c40f';
-                    ctx.fillRect(block.x, block.y, block.w, block.h);
-
-                    if (!block.hit) {
-                        ctx.fillStyle = '#f7dc6f';
-                        ctx.fillRect(block.x, block.y, block.w, 4);
-                        ctx.fillRect(block.x, block.y, 4, block.h);
-
-                        ctx.fillStyle = '#b7950b';
-                        ctx.fillRect(block.x, block.y + block.h - 4, block.w, 4);
-                        ctx.fillRect(block.x + block.w - 4, block.y, 4, block.h);
-
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 22px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('！', block.x + block.w / 2, block.y + block.h / 2);
-                        ctx.textBaseline = 'alphabetic';
-                    } else {
-                        ctx.fillStyle = '#7f8c8d';
-                        ctx.fillRect(block.x, block.y + block.h - 4, block.w, 4);
-                    }
-                } else if (block.type === 'pipe') {
-                    ctx.fillStyle = '#27ae60';
-                    ctx.fillRect(block.x, block.y, block.w, block.h);
-                    ctx.fillStyle = '#2ecc71';
-                    ctx.fillRect(block.x - 4, block.y, block.w + 8, 14);
-                } else if (block.type === 'goal') {
-                    // ゴール地点（城壁とお城、金色の旗）
-                    ctx.fillStyle = '#bdc3c7';
-                    ctx.fillRect(block.x - 10, block.y - 70, 70, 120);
-                    ctx.fillStyle = '#7f8c8d';
-                    ctx.fillRect(block.x - 10, block.y - 90, 20, 20);
-                    ctx.fillRect(block.x + 40, block.y - 90, 20, 20);
-                    ctx.fillStyle = '#34495e';
-                    ctx.fillRect(block.x + 15, block.y - 20, 20, 70); // 城のドア
-
-                    // ポールと旗
-                    ctx.fillStyle = '#ecf0f1';
-                    ctx.fillRect(block.x + 22, block.y - 150, 6, 150);
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.beginPath();
-                    ctx.arc(block.x + 25, block.y - 150, 8, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // ひらめく旗
-                    ctx.fillStyle = '#e74c3c';
-                    ctx.beginPath();
-                    ctx.moveTo(block.x + 28, block.y - 145);
-                    ctx.lineTo(block.x + 65, block.y - 125);
-                    ctx.lineTo(block.x + 28, block.y - 105);
-                    ctx.fill();
-                } else {
-                    ctx.fillStyle = block.color;
-                    ctx.fillRect(block.x, block.y, block.w, block.h);
-                }
-            }
-
-            // アイテム描画
-            for (let item of items) {
-                if (item.type === 'coin') {
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.beginPath();
-                    ctx.arc(item.x + item.w / 2, item.y + item.h / 2, item.w / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (item.type === 'kurikinton') {
-                    ctx.fillStyle = '#d35400';
-                    ctx.beginPath();
-                    ctx.arc(item.x + 16, item.y + 16, 12, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (item.type === 'gopheimochi') {
-                    // 五平餅（本体＋木の棒付き）
-                    ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(item.x + 14, item.y + 18, 4, 14); // 木の棒
-                    
-                    ctx.fillStyle = '#d4ac0d';
-                    ctx.beginPath();
-                    ctx.ellipse(item.x + 16, item.y + 14, 12, 8, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                } else if (item.type === 'hobazushi') {
-                    ctx.fillStyle = '#27ae60';
-                    ctx.fillRect(item.x + 4, item.y + 8, 24, 16);
-                }
-            }
-
-            // 敵（栗ボー）描画
-            for (let enemy of currentEnemies) {
-                if (!enemy.alive) continue;
-                const ex = enemy.x;
-                const ey = enemy.y;
-                ctx.fillStyle = '#8B4513';
-                ctx.beginPath();
-                ctx.arc(ex + 15, ey + 15, 15, Math.PI, 0, false);
-                ctx.fill();
-                ctx.fillRect(ex + 2, ey + 15, 26, 12);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(ex + 6, ey + 14, 6, 8);
-                ctx.fillRect(ex + 18, ey + 14, 6, 8);
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(ex + 8, ey + 17, 3, 4);
-                ctx.fillRect(ex + 20, ey + 17, 3, 4);
-            }
-
-            // プレイヤー描画
-            if (player.invincibleTimer % 4 < 2) {
-                const px = player.x;
-                const py = player.y;
-                const ph = player.h;
-
-                // 足
-                ctx.fillStyle = '#78281f';
-                if (keys.left || keys.right) {
-                    const step = Math.floor(Date.now() / 100) % 2;
-                    ctx.fillRect(px + 4, py + ph - 6, 8, 6);
-                    ctx.fillRect(px + 20 + (step === 0 ? 2 : -2), py + ph - 6, 8, 6);
-                } else {
-                    ctx.fillRect(px + 4, py + ph - 6, 8, 6);
-                    ctx.fillRect(px + 20, py + ph - 6, 8, 6);
-                }
-
-                // 服（青）
-                ctx.fillStyle = '#2980b9';
-                ctx.fillRect(px + 4, py + (ph === 52 ? 24 : 16), 24, ph === 52 ? 22 : 14);
-
-                // シャツ・顔（肌色）
-                ctx.fillStyle = '#f39c12';
-                ctx.fillRect(px + 6, py + (ph === 52 ? 14 : 10), 20, 14);
-
-                // ひげ
-                ctx.fillStyle = '#2c3e50';
-                ctx.fillRect(px + 8, py + (ph === 52 ? 22 : 18), 16, 5);
-
-                // 青い帽子
-                ctx.fillStyle = '#3498db';
-                ctx.fillRect(px + 4, py + 4, 24, 8);
-                if (player.facing === 'right') {
-                    ctx.fillRect(px + 18, py + 10, 12, 3);
-                } else {
-                    ctx.fillRect(px + 2, py + 10, 12, 3);
-                }
-            }
-
-            ctx.restore();
-
-            // スコア・コインUI描画
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 18px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            
-            ctx.fillStyle = '#f1c40f';
-            ctx.beginPath();
-            ctx.arc(26, 25, 8, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(`× ${coins}`, 40, 25);
-            ctx.fillText(`SCORE : ${score}`, 140, 25);
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillText(`♥ × ${player.lives}`, 290, 25);
-
-            ctx.textBaseline = 'alphabetic';
-
-            // ゲーム終了メッセージ（クリアまたはゲームオーバー）
-            if (gameState === 'clear') {
-                ctx.fillStyle = 'rgba(20, 20, 40, 0.85)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#f1c40f';
-                ctx.font = 'bold 44px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('✨ GAME CLEAR! ✨', canvas.width / 2, canvas.height / 2 - 20);
-                ctx.fillStyle = '#ecf0f1';
-                ctx.font = 'bold 18px sans-serif';
-                ctx.fillText(`おめでとう！ スコア: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
-                ctx.fillStyle = '#f39c12';
-                ctx.font = 'bold 16px sans-serif';
-                ctx.fillText('【 スペースキー をおして もう1回プレイする 】', canvas.width / 2, canvas.height / 2 + 65);
-            } else if (gameState === 'gameover') {
-                ctx.fillStyle = 'rgba(20, 20, 30, 0.85)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#e74c3c';
-                ctx.font = 'bold 42px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(' GAME OVER ', canvas.width / 2, canvas.height / 2 - 20);
-                ctx.fillStyle = '#ecf0f1';
-                ctx.font = 'bold 18px sans-serif';
-                ctx.fillText('ざんねん！ もういちど チャレンジしてね！', canvas.width / 2, canvas.height / 2 + 25);
-                ctx.fillStyle = '#f1c40f';
-                ctx.font = 'bold 16px sans-serif';
-                ctx.fillText('【 スペースキー をおして リスタート 】', canvas.width / 2, canvas.height / 2 + 65);
-            }
+      // グリッド線の描画
+      ctx.strokeStyle = '#232938';
+      ctx.lineWidth = 1;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
         }
+      }
 
-        function drawCloud(x, y, size) {
-            ctx.beginPath();
-            ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
-            ctx.arc(x + size * 0.4, y - size * 0.2, size * 0.4, 0, Math.PI * 2);
-            ctx.arc(x + size * 0.8, y, size * 0.45, 0, Math.PI * 2);
-            ctx.closePath();
-            ctx.fill();
+      // 配置済みぷよの描画
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if (grid && grid[y] && grid[y][x] !== 0) {
+            drawPuyoBlock(ctx, x, y, grid[y][x]);
+          }
         }
+      }
 
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
+      // 操作中ぷよの描画
+      if (currentPuyo && !gameOver) {
+        drawPuyoBlock(ctx, currentPuyo.x, currentPuyo.y, currentPuyo.c1);
+        const offset = getChildOffset(currentPuyo.rotation);
+        drawPuyoBlock(ctx, currentPuyo.x + offset.x, currentPuyo.y + offset.y, currentPuyo.c2);
+      }
+
+      // 連鎖数ポップアップアニメーションの描画
+      drawChainPopups();
+
+      // チュートリアル用のヒント描画
+      drawTutorialOverlay();
+
+      // ゲームオーバーオーバーレイ
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ff4757';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('STARTボタンで再挑戦', canvas.width / 2, canvas.height / 2 + 25);
+      }
+    }
+
+    // NEXTぷよの描画
+    function drawNextPuyo() {
+      nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+      if (nextPuyoPair) {
+        const sz = 24;
+        // 子ぷよ (上)
+        drawPuyoBlock(nextCtx, 0.95, 0.3, nextPuyoPair.c2, sz);
+        // 軸ぷよ (下)
+        drawPuyoBlock(nextCtx, 0.95, 1.3, nextPuyoPair.c1, sz);
+      }
+    }
+
+    // --- 6. メインループ ---
+    function update(time = 0) {
+      const deltaTime = time - lastTime;
+      lastTime = time;
+
+      if (!gameOver && !isProcessing && currentPuyo) {
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+          if (isValidMove(currentPuyo, 0, 1)) {
+            currentPuyo.y++;
+          } else {
+            lockPuyo();
+          }
+          dropCounter = 0;
         }
+      }
 
-        function restartGame() {
-            gameState = 'playing';
-            currentWorld = 1;
-            score = 0;
-            coins = 0;
-            cameraX = 0;
-            
-            player.x = 50;
-            player.y = 50;
-            player.vx = 0;
-            player.vy = 0;
-            player.isBig = false;
-            player.h = 36;
-            player.lives = 3;
-            player.invincibleTimer = 0;
-            
-            blocks.forEach(block => { if (block.type === 'question') block.hit = false; });
-            world2Blocks.forEach(block => { if (block.type === 'question') block.hit = false; });
-            items = [];
-            
-            enemies[0] = { x: 600, y: 320, w: 30, h: 30, vx: -1.5, alive: true, patrolMin: 450, patrolMax: 700 };
-            enemies[1] = { x: 1200, y: 320, w: 30, h: 30, vx: -2, alive: true, patrolMin: 1050, patrolMax: 1400 };
-            enemies[2] = { x: 1500, y: 320, w: 30, h: 30, vx: -1.5, alive: true, patrolMin: 1400, patrolMax: 1700 };
-            world2Enemies[0] = { x: 450, y: 320, w: 30, h: 30, vx: -2, alive: true, patrolMin: 300, patrolMax: 650 };
-        }
+      draw();
 
-        gameLoop();
-    </script>
+      if (!gameOver) {
+        animationFrameId = requestAnimationFrame(update);
+      }
+    }
+
+    // --- 7. イベント入力設定 ---
+    document.addEventListener('keydown', e => {
+      // 操作キー（矢印キー・スペースキー）の場合は標準のブラウザ挙動（スクロールやボタン押下）を無効化
+      if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      if (e.key === 'ArrowLeft') moveLeft();
+      if (e.key === 'ArrowRight') moveRight();
+      if (e.key === 'ArrowDown') moveDown();
+      if (e.key === ' ' || e.key.toLowerCase() === 'z') rotatePuyo();
+    });
+
+    // モバイルタッチボタンイベント
+    document.getElementById('btnLeft').addEventListener('click', moveLeft);
+    document.getElementById('btnRight').addEventListener('click', moveRight);
+    document.getElementById('btnRotate').addEventListener('click', rotatePuyo);
+    document.getElementById('btnDown').addEventListener('click', moveDown);
+
+    // ゲームリセット・開始処理
+    function startGame() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      grid = createGrid();
+      score = 0;
+      chainCount = 0;
+      maxChainAchieved = 0;
+      isTutorialCleared = false;
+      chainPopups = [];
+      gameOver = false;
+      isProcessing = false;
+      scoreEl.textContent = '0';
+      chainEl.textContent = '0';
+      nextPuyoPair = null;
+
+      updateGuideBanner(0);
+      spawnPuyo();
+
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      lastTime = performance.now();
+      update();
+
+      // ボタンからフォーカスを外して、スペースキーによる誤操作を防ぐ
+      startBtn.blur();
+    }
+
+    startBtn.addEventListener('click', startGame);
+
+    // 初期状態の表示
+    draw();
+  </script>
 </body>
 </html>
